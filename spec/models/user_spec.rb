@@ -41,4 +41,25 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "UTF-8 exceptions" do
+    let(:body){ "hello joel\255".force_encoding('UTF-8') }
+
+    def replace_name(body, name)
+      body.gsub(/joel/, name)
+    end
+
+    def replace_name_safe(body, name)
+      body.encode('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '').gsub(/joel/, name)
+    end
+
+    it "raises an exception if we use the unsafe method" do
+      lambda { replace_name(body, 'hank') }.should raise_error(ArgumentError)
+    end
+
+    it "works if we use the safe method" do
+      lambda { replace_name_safe(body, 'hank') }.should_not raise_error(ArgumentError)
+      replace_name_safe(body, 'hank').should eq "hello hank"
+    end
+  end
+
 end
